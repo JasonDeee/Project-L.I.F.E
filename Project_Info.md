@@ -13,7 +13,7 @@
 - **Đặc điểm:** LLM nhỏ, tốc độ phản hồi cực nhanh
 - **Vai trò:** Trợ lý chính, xử lý mọi câu hỏi mặc định
 - **Tính năng:** Quick answers, casual conversation, immediate response
-- **Trigger:** Mọi tin nhắn của user (default behavior)
+- **Trigger:** Mọi tin nhắn của user (default behavior), JASON escalation request
 - **Escalation:** Có thể gọi JASON hỗ trợ khi cần
 
 ### JASON (Secondary Assistant - Deep Reasoning)
@@ -26,7 +26,7 @@
   - WENDY escalation request
   - Complex reasoning needed
 - **Behavior:** Slower but more thorough responses
-- **Escalation:** Có thể gọi ngược lại WENDY khi cần hỗ trợ. hoặc hỏi ngược lại WENDY khi đang trong một luồng trò chuyện dạng vòng lặp cho đến khi cả 2 tìm được lời giải.
+- **Escalation:** Có thể gọi ngược lại WENDY khi cần hỗ trợ. hoặc hỏi ngược lại WENDY khi đang trong một luồng trò chuyện (hoặc một task) dạng vòng lặp. Cả 2 sẽ trao đôi với nhau cho đến khi hoàn thành task.
 
 ## 🏗️ Kiến trúc hệ thống
 
