@@ -1,0 +1,312 @@
+/* Header Styles */
+.header {
+  background: #ffffff;
+  border-bottom: 1px solid #e1e5e9;
+  padding: 15px 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 20px;
+}
+
+/* API Configuration Section */
+.api-config {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.api-label {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.api-input-container {
+  position: relative;
+}
+
+.api-input {
+  padding: 8px 12px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 14px;
+  min-width: 200px;
+  transition: border-color 0.3s ease;
+  font-family: monospace;
+}
+
+.api-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.api-display {
+  background: #f8f9fa;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-family: monospace;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 200px;
+}
+
+.api-display:hover {
+  border-color: #667eea;
+  background: #f0f2ff;
+}
+
+.api-display svg {
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+
+.api-display:hover svg {
+  opacity: 1;
+}
+
+.input-hint {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  font-size: 11px;
+  color: #888;
+  margin-top: 4px;
+  text-align: center;
+}
+
+.test-connection-btn {
+  padding: 8px 16px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.test-connection-btn:hover:not(:disabled) {
+  background: #5a6fd8;
+  transform: translateY(-1px);
+}
+
+.test-connection-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Project Title Section */
+.project-title {
+  text-align: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.project-title h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+.subtitle {
+  display: block;
+  font-size: 12px;
+  color: #888;
+  font-weight: 400;
+  margin-top: 2px;
+  font-style: italic;
+}
+
+/* Status Section */
+.status-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .header-content {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+  }
+
+  .api-config {
+    justify-content: center;
+    order: 2;
+  }
+
+  .project-title {
+    order: 1;
+  }
+
+  .status-section {
+    order: 3;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 12px 15px;
+  }
+
+  .header-content {
+    gap: 12px;
+  }
+
+  .api-config {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .api-input,
+  .api-display {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .project-title h1 {
+    font-size: 20px;
+  }
+
+  .subtitle {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .api-config {
+    gap: 6px;
+  }
+
+  .api-label {
+    font-size: 13px;
+  }
+
+  .api-input,
+  .api-display,
+  .test-connection-btn {
+    font-size: 13px;
+    padding: 6px 10px;
+  }
+
+  .project-title h1 {
+    font-size: 18px;
+  }
+}
+
+/* Dark Theme Support */
+@media (prefers-color-scheme: dark) {
+  .header {
+    background: #1a202c;
+    border-bottom-color: #4a5568;
+  }
+
+  .api-label {
+    color: #e2e8f0;
+  }
+
+  .api-input {
+    background: #2d3748;
+    border-color: #4a5568;
+    color: #e2e8f0;
+  }
+
+  .api-input:focus {
+    border-color: #667eea;
+  }
+
+  .api-display {
+    background: #2d3748;
+    border-color: #4a5568;
+    color: #e2e8f0;
+  }
+
+  .api-display:hover {
+    border-color: #667eea;
+    background: #374151;
+  }
+
+  .input-hint {
+    color: #a0aec0;
+  }
+
+  .subtitle {
+    color: #a0aec0;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .header {
+    border-bottom-width: 2px;
+  }
+
+  .api-input,
+  .api-display,
+  .test-connection-btn {
+    border-width: 2px;
+  }
+
+  .project-title h1 {
+    background: none;
+    -webkit-text-fill-color: initial;
+    color: #333;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .api-input,
+  .api-display,
+  .test-connection-btn {
+    transition: none;
+  }
+
+  .test-connection-btn:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* Focus Management */
+.api-config:focus-within {
+  /* Add subtle focus indication when API config is focused */
+}
+
+.header:focus-within .project-title h1 {
+  /* Subtle animation when header has focus */
+}
+

@@ -1,0 +1,254 @@
+/* Message Input Styles */
+.chat-input-container {
+  background: white;
+  border-top: 1px solid #e1e5e9;
+  padding: 20px;
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  max-width: 100%;
+  background: #f8f9fa;
+  border: 2px solid #e1e5e9;
+  border-radius: 24px;
+  padding: 8px;
+  transition: all 0.3s ease;
+}
+
+.input-wrapper:focus-within {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.input-wrapper.error {
+  border-color: #f44336;
+  box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
+}
+
+/* Message Input Textarea */
+.message-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  resize: none;
+  padding: 8px 12px;
+  font-size: 16px;
+  line-height: 1.4;
+  min-height: 24px;
+  max-height: 120px;
+  font-family: inherit;
+  color: #333;
+}
+
+.message-input::placeholder {
+  color: #888;
+}
+
+.message-input:disabled {
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+.message-input:disabled::placeholder {
+  color: #ccc;
+}
+
+/* Send Button */
+.send-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: #667eea;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.send-button:hover:not(:disabled) {
+  background: #5a6fd8;
+  transform: scale(1.05);
+}
+
+.send-button:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.send-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.send-button svg {
+  transition: transform 0.2s ease;
+}
+
+.send-button:hover:not(:disabled) svg {
+  transform: translateX(1px);
+}
+
+/* Error Message */
+.error-message {
+  color: #f44336;
+  font-size: 14px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #ffebee;
+  border: 1px solid #ffcdd2;
+  border-radius: 8px;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Input Footer */
+.input-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  padding: 0 12px;
+  font-size: 12px;
+  color: #888;
+}
+
+.character-count {
+  font-weight: 500;
+}
+
+.character-count.warning {
+  color: #ff9800;
+}
+
+.character-count.danger {
+  color: #f44336;
+}
+
+.input-hint {
+  font-style: italic;
+}
+
+/* Loading State */
+.input-wrapper.loading {
+  pointer-events: none;
+}
+
+.input-wrapper.loading::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .chat-input-container {
+    padding: 15px;
+  }
+
+  .input-wrapper {
+    gap: 8px;
+    padding: 6px;
+  }
+
+  .message-input {
+    font-size: 16px; /* Prevent zoom on iOS */
+    padding: 6px 10px;
+  }
+
+  .send-button {
+    width: 36px;
+    height: 36px;
+  }
+
+  .input-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+
+/* Dark Theme Support */
+@media (prefers-color-scheme: dark) {
+  .chat-input-container {
+    background: #1a202c;
+    border-top-color: #4a5568;
+  }
+
+  .input-wrapper {
+    background: #2d3748;
+    border-color: #4a5568;
+  }
+
+  .input-wrapper:focus-within {
+    border-color: #667eea;
+  }
+
+  .message-input {
+    color: #e2e8f0;
+  }
+
+  .message-input::placeholder {
+    color: #a0aec0;
+  }
+
+  .error-message {
+    background: #2d3748;
+    border-color: #f44336;
+    color: #fed7d7;
+  }
+
+  .input-footer {
+    color: #a0aec0;
+  }
+}
+
+/* Focus Indicators for Accessibility */
+.send-button:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+.message-input:focus {
+  /* Focus is handled by input-wrapper */
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .input-wrapper {
+    border-width: 3px;
+  }
+
+  .send-button {
+    border: 2px solid transparent;
+  }
+
+  .send-button:focus {
+    border-color: currentColor;
+  }
+}
+
