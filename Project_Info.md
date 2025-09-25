@@ -26,6 +26,7 @@
   - WENDY escalation request
   - Complex reasoning needed
 - **Behavior:** Slower but more thorough responses
+- **Escalation:** Có thể gọi ngược lại WENDY khi cần hỗ trợ. hoặc hỏi ngược lại WENDY khi đang trong một luồng trò chuyện dạng vòng lặp cho đến khi cả 2 tìm được lời giải.
 
 ## 🏗️ Kiến trúc hệ thống
 
@@ -42,7 +43,7 @@
 
 - **Realtime messaging:** WebSocket/Socket.io
 - **Infinite chat history:** Tự động nén lịch sử cũ bằng summarization
-- **Dual assistant mode:** 2 AI hoạt động đồng thời
+- **Dual assistant mode:** 2 AI hoạt động đồng thời, được tối ưu để xử lý thông tin như 2 thực thể riêng biệt, có thể trực tiếp giao tiếp với nhau mà không hoàn toàn bị ảnh hưởng bởi người dùng khi can thiệp vào vòng lặp
 - **Smart routing:** Phân chia công việc giữa WENDY và JASON
 
 ## 🛠️ Technology Stack (Dự kiến)
