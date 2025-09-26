@@ -208,23 +208,64 @@
 }
 
 @media (max-width: 480px) {
+  .header {
+    padding: 10px 12px;
+  }
+
   .api-config {
-    gap: 6px;
+    gap: 8px;
   }
 
   .api-label {
     font-size: 13px;
+    text-align: center;
   }
 
   .api-input,
-  .api-display,
+  .api-display {
+    font-size: 14px; /* Keep readable size */
+    padding: 10px 12px; /* Better touch targets */
+    min-height: 44px; /* iOS recommended touch target */
+  }
+
   .test-connection-btn {
-    font-size: 13px;
-    padding: 6px 10px;
+    font-size: 14px;
+    padding: 12px 16px;
+    min-height: 44px;
   }
 
   .project-title h1 {
     font-size: 18px;
+  }
+
+  .subtitle {
+    font-size: 10px;
+  }
+}
+
+/* iPhone SE and smaller screens */
+@media (max-width: 375px) {
+  .header {
+    padding: 8px 10px;
+  }
+
+  .api-input,
+  .api-display {
+    font-size: 13px;
+    padding: 8px 10px;
+  }
+
+  .test-connection-btn {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+
+  .project-title h1 {
+    font-size: 16px;
+  }
+
+  .subtitle {
+    display: none; /* Hide subtitle on very small screens */
   }
 }
 
@@ -309,4 +350,3 @@
 .header:focus-within .project-title h1 {
   /* Subtle animation when header has focus */
 }
-

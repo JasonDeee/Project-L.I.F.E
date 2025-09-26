@@ -55,10 +55,13 @@ export const validateMessage = (
 };
 
 // Create user message
-export const createUserMessage = (content: string): Message => {
+export const createUserMessage = (
+  content: string,
+  timestamp?: string
+): Message => {
   return {
     id: generateMessageId(),
-    timestamp: new Date().toISOString(),
+    timestamp: timestamp || new Date().toISOString(),
     type: "user",
     content: content.trim(),
     metadata: {
@@ -88,10 +91,13 @@ export const createAssistantMessage = (
 };
 
 // Create system message
-export const createSystemMessage = (content: string): Message => {
+export const createSystemMessage = (
+  content: string,
+  timestamp?: string
+): Message => {
   return {
     id: generateMessageId(),
-    timestamp: new Date().toISOString(),
+    timestamp: timestamp || new Date().toISOString(),
     type: "system",
     content,
     metadata: {
@@ -199,4 +205,3 @@ export const getMessageSummary = (
 
   return content.substring(0, maxLength - 3) + "...";
 };
-

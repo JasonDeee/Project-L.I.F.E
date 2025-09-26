@@ -129,7 +129,9 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .chat-messages {
-    padding: 15px;
+    padding: 12px;
+    /* Improve scrolling performance on mobile */
+    -webkit-overflow-scrolling: touch;
   }
 
   .messages-content {
@@ -144,6 +146,31 @@
   .chat-messages {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .chat-container {
+    /* Optimize for mobile keyboards */
+    height: 100%;
+    min-height: 0;
+  }
+
+  .chat-messages {
+    padding: 8px;
+    /* Better mobile scrolling */
+    -webkit-overflow-scrolling: touch;
+    overflow-scrolling: touch;
+  }
+
+  .messages-content {
+    padding-bottom: 12px;
+  }
+
+  /* Improve touch scrolling */
+  .chat-messages {
+    scroll-behavior: smooth;
+    overscroll-behavior: contain;
   }
 }
 
@@ -211,4 +238,3 @@
   /* Add subtle focus indication when input is focused */
   border-right: 2px solid transparent;
 }
-

@@ -35,7 +35,8 @@ type ChatAction =
     }
   | { type: "SET_ERROR"; payload: string | null }
   | { type: "CLEAR_MESSAGES" }
-  | { type: "LOAD_MESSAGES"; payload: Message[] };
+  | { type: "LOAD_MESSAGES"; payload: Message[] }
+  | { type: "LOAD_CHAT_HISTORY"; payload: Message[] };
 
 interface ChatContextType extends ChatState {
   sendMessage: (content: string) => void;
@@ -140,6 +141,13 @@ const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
         error: null,
       };
 
+    case "LOAD_CHAT_HISTORY":
+      return {
+        ...state,
+        messages: [...action.payload, ...state.messages],
+        error: null,
+      };
+
     default:
       return state;
   }
@@ -153,7 +161,49 @@ interface ChatProviderProps {
 
 export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(chatReducer, initialState);
-  const { socket, isConnected, sendMessage: socketSendMessage } = useSocket();
+  const {
+    socket,
+    isConnected,
+    sendMessage: socketSendMessage,
+    serverHandshakeComplete,
+  } = useSocket();
+
+  // Handle handshake response with chat history
+  useEffect(() => {
+    if (!socket) return;
+
+    // Listen for handshake response with chat history
+    socket.on("handshake_response", (data) => {
+      if (data.success && data.chatHistory && data.chatHistory.length > 0) {
+        console.log(
+          `📚 Loading ${data.chatHistory.length} messages from server history`
+        );
+
+        // Convert server messages to local format
+        const loadedMessages: Message[] = data.chatHistory.map((msg: any) => {
+          if (msg.type === "user") {
+            return createUserMessage(msg.content, msg.timestamp);
+          } else if (msg.type === "assistant") {
+            return createAssistantMessage(
+              msg.content,
+              msg.assistant || "wendy",
+              msg.timestamp
+            );
+          } else {
+            return createSystemMessage(msg.content, msg.timestamp);
+          }
+        });
+
+        // Load messages into state
+        dispatch({ type: "LOAD_CHAT_HISTORY", payload: loadedMessages });
+        console.log("✅ Chat history loaded into frontend");
+      }
+    });
+
+    return () => {
+      socket.off("handshake_response");
+    };
+  }, [socket]);
 
   // Socket event listeners
   useEffect(() => {
@@ -216,6 +266,14 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       }
     );
 
+    // Handle message logged confirmation
+    socket.on(
+      "message_logged",
+      (data: { type: string; content: string; logged: boolean }) => {
+        console.log("✅ Message logged to backend:", data);
+      }
+    );
+
     // Cleanup listeners on unmount
     return () => {
       socket.off(SOCKET_EVENTS.ASSISTANT_MESSAGE);
@@ -225,6 +283,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       socket.off("streaming_complete");
       socket.off(SOCKET_EVENTS.ERROR);
       socket.off(SOCKET_EVENTS.CONNECTION_STATUS);
+      socket.off("message_logged");
     };
   }, [socket]);
 
@@ -235,51 +294,85 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     // Clear any previous errors
     dispatch({ type: "SET_ERROR", payload: null });
 
-    // Try WebSocket first, fallback to direct API
-    if (isConnected && socket) {
-      console.log("📤 Sending via WebSocket");
-      socketSendMessage(content);
-    } else {
-      console.log("📡 WebSocket not connected, using direct LM Studio API");
+    // Debug connection status
+    console.log("🔍 Connection debug:", {
+      isConnected,
+      hasSocket: !!socket,
+      serverHandshakeComplete,
+    });
 
-      // Update API URL from localStorage if available
-      const savedUrl = localStorage.getItem("life_api_url");
-      if (savedUrl) {
-        directLMStudioService.updateApiUrl(savedUrl);
-      }
-
-      // Start streaming message
-      const streamingMessage = createAssistantMessage("", "wendy");
-      dispatch({
-        type: "START_STREAMING",
-        payload: { assistant: "wendy" },
+    // Send user message to backend for logging (if connected and handshake complete)
+    if (isConnected && socket && serverHandshakeComplete) {
+      console.log("📤 Logging user message to backend");
+      socket.emit("user_message", {
+        content,
+        timestamp: new Date().toISOString(),
       });
+    } else if (isConnected && socket && !serverHandshakeComplete) {
+      console.log("⏳ Waiting for server handshake before logging");
+    } else if (!isConnected || !socket) {
+      console.log("❌ No WebSocket connection to backend server");
+    }
 
-      try {
-        await directLMStudioService.sendMessage(
-          content,
-          (chunk) => {
-            // Update streaming content
-            dispatch({ type: "UPDATE_STREAMING", payload: chunk });
-          },
-          (fullResponse) => {
-            // Complete streaming
-            dispatch({ type: "COMPLETE_STREAMING" });
-            console.log("✅ Message sent successfully via direct API");
-          },
-          (error) => {
-            // Handle error
-            dispatch({ type: "SET_ERROR", payload: error });
-            dispatch({ type: "COMPLETE_STREAMING" });
+    // Get AI response via direct API (keep current functionality)
+    console.log("📡 Getting AI response via direct LM Studio API");
 
-            const errorMessage = createSystemMessage(`Lỗi: ${error}`);
-            dispatch({ type: "ADD_MESSAGE", payload: errorMessage });
+    // Update API URL from localStorage if available
+    const savedUrl = localStorage.getItem("life_api_url");
+    if (savedUrl) {
+      directLMStudioService.updateApiUrl(savedUrl);
+    }
+
+    // Start streaming message
+    const streamingMessage = createAssistantMessage("", "wendy");
+    dispatch({
+      type: "START_STREAMING",
+      payload: { assistant: "wendy" },
+    });
+
+    try {
+      const startTime = Date.now();
+
+      await directLMStudioService.sendMessage(
+        content,
+        (chunk) => {
+          // Update streaming content
+          dispatch({ type: "UPDATE_STREAMING", payload: chunk });
+        },
+        (fullResponse) => {
+          // Complete streaming
+          dispatch({ type: "COMPLETE_STREAMING" });
+
+          const endTime = Date.now();
+          const responseTime = endTime - startTime;
+
+          console.log("✅ Message sent successfully via direct API");
+
+          // Send assistant response to backend for logging (if connected and handshake complete)
+          if (isConnected && socket && serverHandshakeComplete) {
+            console.log("📤 Logging assistant response to backend");
+            socket.emit("assistant_message", {
+              content: fullResponse,
+              assistant: "wendy",
+              response_time_ms: responseTime,
+              model: "wendy-fast-7b",
+              streaming: true,
+              timestamp: new Date().toISOString(),
+            });
           }
-        );
-      } catch (error: any) {
-        console.error("❌ Direct API error:", error);
-        dispatch({ type: "SET_ERROR", payload: error.message });
-      }
+        },
+        (error) => {
+          // Handle error
+          dispatch({ type: "SET_ERROR", payload: error });
+          dispatch({ type: "COMPLETE_STREAMING" });
+
+          const errorMessage = createSystemMessage(`Lỗi: ${error}`);
+          dispatch({ type: "ADD_MESSAGE", payload: errorMessage });
+        }
+      );
+    } catch (error: any) {
+      console.error("❌ Direct API error:", error);
+      dispatch({ type: "SET_ERROR", payload: error.message });
     }
   };
 

@@ -11,7 +11,28 @@
 - [x] Architecture planning
 - [x] Technology stack decisions
 
-## 🔄 CURRENT SPRINT (Phase 1: Foundation)
+### Phase 0.5: React Frontend Foundation
+
+- [x] React application setup with TypeScript
+- [x] Socket.io-client integration
+- [x] Context API for state management
+- [x] Component structure implementation
+- [x] Direct LM Studio API integration (fallback)
+- [x] Mobile-responsive design optimization
+- [x] Streaming response UI implementation
+- [x] Connection debugging and fixes
+
+### Documentation & Planning
+
+- [x] File system structure design
+- [x] JSON schema definitions (Daily, Monthly, Yearly)
+- [x] Image RICH data schema design
+- [x] Mobile optimization guide
+- [x] Debug documentation
+
+## 🔄 CURRENT SPRINT (Phase 1: Simple Backend Foundation)
+
+### 🎯 **FOCUSED SCOPE: Basic Chat Logging Only**
 
 ### Backend Setup (Node.js + Socket.io)
 
@@ -22,33 +43,39 @@
   - [ ] Socket.io integration
   - [ ] Basic folder structure creation
 
-- [ ] **File Storage System**
+- [ ] **Simple File Storage System**
 
-  - [ ] Create /data directory structure
-  - [ ] Daily chat log JSON schema
+  - [ ] Create E:/server directory structure (per Path.json)
+  - [ ] Basic Daily_chat.json schema (simplified)
   - [ ] File operations utilities (read/write/append)
-  - [ ] Date-based file organization
+  - [ ] Date-based file organization (YYYY/MM-month/DD.MM.YYYY/)
 
-- [ ] **WENDY Service Integration**
-  - [ ] LM Studio HTTP client
-  - [ ] Streaming response handling
-  - [ ] Error handling & fallbacks
-  - [ ] Response formatting
+- [ ] **Chat Message Logging**
+  - [ ] Receive messages from React frontend
+  - [ ] Format to simple JSON structure
+  - [ ] Save to Daily_chat.json files
+  - [ ] Handle file creation and appending
 
-### Frontend Setup (React)
+### **OUT OF SCOPE (Current Sprint)**
 
-- [ ] **React Application Setup**
+- ❌ WENDY/JASON LLM integration (React handles direct API)
+- ❌ Advanced statistics and analytics
+- ❌ Image processing and RICH data
+- ❌ Summarization features
 
-  - [ ] Create React app
-  - [ ] Socket.io-client integration
-  - [ ] Context for global state
-  - [ ] Component structure planning
+### Frontend Integration
 
-- [ ] **Chat Interface Migration**
-  - [ ] Convert HTML/CSS to React components
-  - [ ] WebSocket connection management
-  - [ ] Real-time message updates
-  - [ ] Streaming response UI
+- [ ] **Backend Connection Integration**
+
+  - [x] Socket.io-client already implemented
+  - [ ] Update ChatContext to send messages to backend
+  - [ ] Add chat history logging integration
+  - [ ] Test backend connection
+
+- [ ] **Message Flow Update**
+  - [ ] Send user messages to backend via Socket.io
+  - [ ] Send assistant responses to backend for logging
+  - [ ] Maintain current direct API functionality as fallback
 
 ## 📋 NEXT PHASE (Phase 2: Core Features)
 
@@ -123,11 +150,12 @@
 
 ## 📊 PROGRESS TRACKING
 
-### Current Status: **Phase 1 - Planning Complete** ✅
+### Current Status: **Phase 1 - Backend Development** 🔄
 
 ```
 Phase 0: Planning & Prototype    ████████████ 100%
-Phase 1: Foundation              ░░░░░░░░░░░░   0%
+Phase 0.5: React Frontend        ████████████ 100%
+Phase 1: Simple Backend          ██░░░░░░░░░░  20%
 Phase 2: Core Features           ░░░░░░░░░░░░   0%
 Phase 3: JASON Integration       ░░░░░░░░░░░░   0%
 Phase 4: Advanced Features       ░░░░░░░░░░░░   0%
@@ -148,13 +176,13 @@ Total Estimated: 23-33 days
 
 ## 🎯 IMMEDIATE NEXT STEPS (Today)
 
-### Priority 1: Node.js Backend
+### Priority 1: Simple Node.js Chat Logger
 
 1. **Initialize Node.js project**
 
    ```bash
    npm init -y
-   npm install express socket.io cors
+   npm install express socket.io cors fs-extra
    npm install -D nodemon concurrently
    ```
 
@@ -163,16 +191,20 @@ Total Estimated: 23-33 days
    ```
    /server
      app.js (main server file)
-     /routes (API routes)
-     /services (WENDY service)
      /utils (file operations)
-     /data (storage directory)
+     /config (path configuration)
    ```
 
 3. **Setup Socket.io connection**
+
    - WebSocket server configuration
-   - Basic message handling
-   - Connection logging
+   - Basic message logging
+   - Connection to React frontend
+
+4. **Implement E: drive file structure**
+   - Read Path.json configuration
+   - Create directory structure: E:/server/ChatHistory/YYYY/MM-month/DD.MM.YYYY/
+   - Simple Daily_chat.json logging
 
 ### Priority 2: React Frontend
 

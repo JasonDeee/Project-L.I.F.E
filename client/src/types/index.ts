@@ -93,7 +93,6 @@ export interface StreamingMessageProps {
 }
 
 export interface ConnectionStatusProps {
-  status: "connected" | "disconnected" | "checking";
+  status: "connected" | "disconnected" | "checking" | "handshaking";
   onTest?: () => void;
 }
-

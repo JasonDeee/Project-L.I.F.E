@@ -169,11 +169,15 @@ textarea {
 @media (max-width: 768px) {
   body {
     font-size: 14px;
+    /* Prevent zoom on input focus (iOS Safari) */
+    -webkit-text-size-adjust: 100%;
   }
 
   .app-container {
     height: 100vh;
+    height: 100dvh; /* Dynamic viewport height for mobile */
     background: rgba(255, 255, 255, 0.98);
+    padding: 0;
   }
 
   ::-webkit-scrollbar {
@@ -184,10 +188,24 @@ textarea {
 @media (max-width: 480px) {
   body {
     font-size: 13px;
+    /* Disable pull-to-refresh on mobile */
+    overscroll-behavior-y: contain;
   }
 
   .app-container {
     background: white;
+    height: 100vh;
+    height: 100dvh; /* Use dynamic viewport height */
+    min-height: -webkit-fill-available; /* iOS Safari fallback */
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Prevent horizontal scroll */
+  html,
+  body {
+    overflow-x: hidden;
+    width: 100%;
   }
 }
 

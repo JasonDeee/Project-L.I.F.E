@@ -46,6 +46,8 @@ const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
         return "Kết nối LM Studio";
       case "checking":
         return "Đang kiểm tra...";
+      case "handshaking":
+        return "Đang đồng bộ với server...";
       case "disconnected":
       default:
         return "Mất kết nối";

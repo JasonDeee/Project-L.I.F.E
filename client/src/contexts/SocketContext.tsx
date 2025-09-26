@@ -13,11 +13,13 @@ import { directLMStudioService } from "../services/directLMStudioService";
 interface SocketContextType {
   socket: Socket | null;
   isConnected: boolean;
-  connectionStatus: "connected" | "disconnected" | "checking";
+  connectionStatus: "connected" | "disconnected" | "checking" | "handshaking";
   connect: (url?: string) => void;
   disconnect: () => void;
   sendMessage: (content: string) => void;
   testConnection: () => void;
+  serverHandshakeComplete: boolean;
+  chatHistoryLoaded: boolean;
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
@@ -30,18 +32,14 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<
-    "connected" | "disconnected" | "checking"
+    "connected" | "disconnected" | "checking" | "handshaking"
   >("disconnected");
   const [directConnectionWorking, setDirectConnectionWorking] = useState(false);
+  const [serverHandshakeComplete, setServerHandshakeComplete] = useState(false);
+  const [chatHistoryLoaded, setChatHistoryLoaded] = useState(false);
 
   const connect = (url: string = API_CONFIG.WEBSOCKET_URL) => {
-    // Skip WebSocket if direct connection is already working
-    if (directConnectionWorking) {
-      console.log(
-        "⏭️ Skipping WebSocket connection - Direct API already working"
-      );
-      return;
-    }
+    console.log("🔌 Attempting WebSocket connection for backend logging...");
 
     console.log("🔗 Attempting WebSocket connection to:", url);
 
@@ -66,26 +64,73 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
     // Connection event handlers
     newSocket.on("connect", () => {
-      console.log("✅ WebSocket connected");
+      console.log("🎉 WebSocket connected to backend server");
       setIsConnected(true);
-      setConnectionStatus("connected");
+      setConnectionStatus("handshaking");
+
+      // Start handshake process
+      console.log("🤝 Starting handshake with server...");
+      newSocket.emit("client_handshake", {
+        clientDate: new Date().toISOString(),
+        userAgent: navigator.userAgent,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      });
+    });
+
+    // Handle handshake response
+    newSocket.on("handshake_response", (data) => {
+      console.log("🤝 Handshake response received:", data);
+
+      if (data.success) {
+        setServerHandshakeComplete(true);
+        setConnectionStatus("connected");
+        setChatHistoryLoaded(true);
+
+        if (data.isNewFile) {
+          console.log("🆕 New chat bundle created on server");
+          console.log(`📂 File path: ${data.filePath}`);
+        } else {
+          console.log(
+            `📚 Loaded ${data.chatHistory.length} messages from history`
+          );
+          // TODO: Load chat history into ChatContext
+        }
+
+        console.log("✅ Server handshake completed successfully");
+      } else {
+        console.error("❌ Server handshake failed:", data.error);
+        setConnectionStatus("disconnected");
+        setServerHandshakeComplete(false);
+      }
     });
 
     newSocket.on("disconnect", (reason) => {
       console.log("❌ WebSocket disconnected:", reason);
-      // Don't set disconnected if we have direct API connection
+      setServerHandshakeComplete(false);
+      setChatHistoryLoaded(false);
+
+      // Keep connected status if we have direct API connection
       if (!directConnectionWorking) {
         setIsConnected(false);
         setConnectionStatus("disconnected");
+      } else {
+        console.log("⚠️ WebSocket disconnected but Direct API still working");
+        setConnectionStatus("connected"); // Keep connected for UI
       }
     });
 
     newSocket.on("connect_error", (error) => {
       console.error("🔴 WebSocket connection error:", error);
+      setServerHandshakeComplete(false);
+      setChatHistoryLoaded(false);
+
       // Don't set disconnected if we have direct API connection
       if (!directConnectionWorking) {
         setIsConnected(false);
         setConnectionStatus("disconnected");
+      } else {
+        console.log("⚠️ WebSocket failed but Direct API still working");
+        setConnectionStatus("connected"); // Keep connected for UI
       }
     });
 
@@ -196,19 +241,24 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       if (result.success) {
         console.log("🎉 Direct API connection working");
         setDirectConnectionWorking(true);
-        setConnectionStatus("connected");
-        setIsConnected(true);
-        console.log("✅ Direct connection working, skipping WebSocket");
-        console.log("📋 Connection Summary:", {
+        console.log("📋 Direct API Summary:", {
           type: "Direct LM Studio API",
           url: lmStudioUrl,
           models: result.data?.data?.length || 0,
           status: "✅ Ready",
         });
+
+        // ALWAYS try WebSocket for backend logging, regardless of direct API status
+        console.log(
+          "🔄 Direct API working, now connecting to backend server for logging..."
+        );
+        connect();
       } else {
         console.error("❌ LM Studio connection failed:", result.error);
         setDirectConnectionWorking(false);
-        console.log("🔄 Direct connection failed, trying WebSocket as backup");
+        console.log(
+          "🔄 Direct connection failed, trying WebSocket as backup for both API and logging"
+        );
         connect();
       }
     };
@@ -237,6 +287,8 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     disconnect,
     sendMessage,
     testConnection,
+    serverHandshakeComplete,
+    chatHistoryLoaded,
   };
 
   return (
