@@ -9,8 +9,19 @@ const MessageInput: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const { sendMessage, isTyping } = useChat();
-  const { isConnected } = useSocket();
+  const { sendMessage, state } = useChat();
+  const { isLoading } = state;
+  const { isConnected, connectionStatus } = useSocket();
+
+  // Debug connection status
+  useEffect(() => {
+    console.log("🔍 MessageInput - Connection status:", {
+      isConnected,
+      connectionStatus,
+      isLoading,
+      messageLength: message.length,
+    });
+  }, [isConnected, connectionStatus, isLoading, message.length]);
 
   // Auto-resize textarea
   const adjustTextareaHeight = () => {
@@ -59,7 +70,7 @@ const MessageInput: React.FC = () => {
     }
 
     // Check if already typing
-    if (isTyping) {
+    if (isLoading) {
       setError("Đang chờ phản hồi từ assistant...");
       return;
     }
@@ -80,7 +91,7 @@ const MessageInput: React.FC = () => {
     }
   };
 
-  const isDisabled = !isConnected || isTyping || !message.trim();
+  const isDisabled = !isConnected || isLoading || !message.trim();
 
   return (
     <div className="chat-input-container">
@@ -93,7 +104,7 @@ const MessageInput: React.FC = () => {
           placeholder={
             !isConnected
               ? "Không có kết nối..."
-              : isTyping
+              : isLoading
               ? "Đang chờ phản hồi..."
               : "Nhập tin nhắn của bạn..."
           }
@@ -110,7 +121,7 @@ const MessageInput: React.FC = () => {
           title={
             !isConnected
               ? "Không có kết nối"
-              : isTyping
+              : isLoading
               ? "Đang chờ phản hồi"
               : "Gửi tin nhắn (Enter)"
           }
@@ -134,4 +145,3 @@ const MessageInput: React.FC = () => {
 };
 
 export default MessageInput;
-

@@ -5,7 +5,8 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon app.js",
+    "dev": "nodemon --exec ts-node app.js",
+    "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -17,13 +18,18 @@
   "author": "Project L.I.F.E",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.18.2",
-    "socket.io": "^4.7.5",
+    "@lmstudio/sdk": "^1.5.0",
     "cors": "^2.8.5",
-    "fs-extra": "^11.1.1"
+    "express": "^4.18.2",
+    "fs-extra": "^11.1.1",
+    "node-fetch": "^3.3.2",
+    "socket.io": "^4.7.5"
   },
   "devDependencies": {
+    "@types/node": "^24.5.2",
+    "concurrently": "^8.2.2",
     "nodemon": "^3.0.1",
-    "concurrently": "^8.2.2"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
   }
 }

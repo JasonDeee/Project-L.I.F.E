@@ -46,24 +46,9 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const connect = (url: string = API_CONFIG.WEBSOCKET_URL) => {
     console.log("🔗 Connecting to backend server:", url);
 
-    // Prevent multiple connections
-    if (socket && socket.connected) {
-      console.log("🔌 Already connected, skipping new connection");
-      console.log("🆔 Current socket ID:", socket.id);
-      return;
-    }
-
-    // Check if we're already in the process of connecting
-    if (connectionStatus === "checking" || connectionStatus === "handshaking") {
-      console.log("⏳ Already connecting, skipping new connection");
-      console.log("🔍 Current status:", connectionStatus);
-      return;
-    }
-
     if (socket) {
-      console.log("🔌 Disconnecting existing socket:", socket.id);
+      console.log("🔌 Disconnecting existing socket");
       socket.disconnect();
-      socket.removeAllListeners();
     }
 
     setConnectionStatus("checking");
@@ -72,7 +57,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       transports: ["websocket"],
       timeout: 5000,
       retries: 3,
-      forceNew: true, // Force new connection
     });
 
     console.log("📡 Socket instance created with options:", {
@@ -85,7 +69,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     // Connection events
     newSocket.on("connect", () => {
       console.log("🎉 WebSocket connected to backend server");
-      console.log("🆔 New socket ID:", newSocket.id);
       setSocket(newSocket);
       setIsConnected(true);
       setConnectionStatus("handshaking");
@@ -100,19 +83,11 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     });
 
     newSocket.on("handshake_response", (data) => {
-      console.log("🤝 ===== HANDSHAKE RESPONSE =====");
-      console.log("📦 Response data:", data);
-      console.log("✅ Success:", data.success);
-      console.log("🆕 Is new file:", data.isNewFile);
-      console.log("📚 Chat history length:", data.chatHistory?.length || 0);
-      console.log("📅 Server date:", data.serverDate);
-      console.log("📂 File path:", data.filePath);
-      console.log("💬 Message:", data.message);
+      console.log("🤝 Handshake response received:", data);
 
       if (data.success) {
         setServerHandshakeComplete(true);
         setConnectionStatus("connected");
-        console.log("✅ Handshake state updated: connected");
 
         if (data.isNewFile) {
           console.log("🆕 New chat bundle created on server");
@@ -126,33 +101,18 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
         console.log("✅ Server handshake completed successfully");
       } else {
-        console.error("❌ ===== HANDSHAKE FAILED =====");
-        console.error("💬 Error:", data.error);
-        console.error("📅 Server date:", data.serverDate);
-        console.error("📅 Client date:", data.clientDate);
-        console.error("⏰ Hours diff:", data.hoursDiff);
-
+        console.error("❌ Server handshake failed:", data.error);
         setConnectionStatus("disconnected");
         setServerHandshakeComplete(false);
       }
-      console.log("🤝 ===== HANDSHAKE PROCESSED =====");
     });
 
     newSocket.on("disconnect", (reason) => {
       console.log("❌ WebSocket disconnected:", reason);
-      console.log("🔍 Disconnect reason:", reason);
-      console.log("🆔 Disconnected socket ID:", newSocket.id);
-
       setIsConnected(false);
       setConnectionStatus("disconnected");
       setServerHandshakeComplete(false);
       setChatHistoryLoaded(false);
-
-      // Don't auto-reconnect if server forced disconnect
-      if (reason === "io server disconnect") {
-        console.log("🛑 Server forced disconnect - not auto-reconnecting");
-        console.log("ℹ️ User can manually reconnect if needed");
-      }
     });
 
     newSocket.on("connect_error", (error) => {
@@ -164,35 +124,22 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     });
 
     // AI Response event handlers
-    newSocket.on("assistant_message", (data) => {
-      console.log("🎉 ===== SOCKET: AI RESPONSE =====");
-      console.log("📦 Response data:", data);
-      console.log("📝 Content length:", data.content?.length || 0);
-      console.log("🤖 Assistant:", data.assistant || "unknown");
-      console.log("⏰ Timestamp:", data.timestamp);
-      console.log("✅ Logged:", data.logged);
-      console.log("📊 Metadata:", data.metadata);
-      console.log("🎉 ===== SOCKET: AI RESPONSE END =====");
+    newSocket.on("assistant_message_chunk", (data) => {
+      console.log("📨 Received AI chunk:", data.content?.slice(0, 50) + "...");
+      // This will be handled by ChatContext
+    });
+
+    newSocket.on("assistant_message_complete", (data) => {
+      console.log("🎉 AI response complete:", data.content?.length + " chars");
       // This will be handled by ChatContext
     });
 
     newSocket.on("message_logged", (data) => {
-      console.log("✅ ===== SOCKET: MESSAGE LOGGED =====");
-      console.log("📦 Log data:", data);
-      console.log("📝 Type:", data.type);
-      console.log("📄 Content:", data.content?.slice(0, 50) + "...");
-      console.log("⏰ Timestamp:", data.timestamp);
-      console.log("✅ Logged status:", data.logged);
-      console.log("✅ ===== SOCKET: LOGGING END =====");
+      console.log("✅ Message logged to server:", data);
     });
 
     newSocket.on("error", (data) => {
-      console.error("🔴 ===== SOCKET: SERVER ERROR =====");
-      console.error("📦 Error data:", data);
-      console.error("💬 Message:", data.message);
-      console.error("🔢 Code:", data.code);
-      console.error("📋 Details:", data.details);
-      console.error("🔴 ===== SOCKET: ERROR END =====");
+      console.error("🔴 Server error:", data);
     });
 
     // Connection test response
@@ -249,12 +196,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   // Auto-connect on mount
   useEffect(() => {
     console.log("🚀 SocketProvider mounted, attempting auto-connect");
-    console.log("🔍 Current state:", {
-      hasSocket: !!socket,
-      isConnected,
-      connectionStatus,
-      socketId: socket?.id,
-    });
 
     const initConnection = () => {
       setConnectionStatus("checking");
@@ -262,22 +203,12 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       connect();
     };
 
-    // Only connect if not already connected
-    if (!socket || !isConnected) {
-      console.log("🔄 Starting new connection...");
-      initConnection();
-    } else {
-      console.log("🔗 Already connected, skipping auto-connect");
-      console.log("🆔 Current socket ID:", socket.id);
-      console.log("🔍 Connection status:", isConnected);
-    }
+    initConnection();
 
     return () => {
       console.log("🧹 SocketProvider unmounting");
       if (socket) {
-        console.log("🔌 Disconnecting socket on unmount:", socket.id);
         socket.disconnect();
-        socket.removeAllListeners();
       }
     };
   }, []);

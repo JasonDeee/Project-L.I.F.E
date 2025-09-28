@@ -18,12 +18,15 @@ interface ChatState {
   messages: Message[];
   isLoading: boolean;
   error: string | null;
+  streamingMessage: Message | null;
 }
 
 type ChatAction =
   | { type: "ADD_USER_MESSAGE"; payload: string }
-  | { type: "ADD_ASSISTANT_MESSAGE"; payload: string }
-  | { type: "SET_LOADING"; payload: boolean }
+  | { type: "START_STREAMING"; payload: Message }
+  | { type: "UPDATE_STREAMING"; payload: string }
+  | { type: "COMPLETE_STREAMING"; payload: string }
+  | { type: "STOP_STREAMING" }
   | { type: "SET_ERROR"; payload: string | null }
   | { type: "LOAD_CHAT_HISTORY"; payload: Message[] }
   | { type: "CLEAR_MESSAGES" };
@@ -55,22 +58,40 @@ const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
         error: null,
       };
 
-    case "ADD_ASSISTANT_MESSAGE":
+    case "START_STREAMING":
       return {
         ...state,
-        messages: [
-          ...state.messages,
-          createAssistantMessage(action.payload, "wendy"),
-        ],
-        isLoading: false,
+        streamingMessage: action.payload,
+        isLoading: true,
         error: null,
       };
 
-    case "SET_LOADING":
+    case "UPDATE_STREAMING":
       return {
         ...state,
-        isLoading: action.payload,
-        error: null,
+        streamingMessage: state.streamingMessage
+          ? { ...state.streamingMessage, content: action.payload }
+          : null,
+      };
+
+    case "COMPLETE_STREAMING":
+      return {
+        ...state,
+        messages: state.streamingMessage
+          ? [
+              ...state.messages,
+              { ...state.streamingMessage, content: action.payload },
+            ]
+          : state.messages,
+        streamingMessage: null,
+        isLoading: false,
+      };
+
+    case "STOP_STREAMING":
+      return {
+        ...state,
+        streamingMessage: null,
+        isLoading: false,
       };
 
     case "SET_ERROR":
@@ -78,6 +99,7 @@ const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
         ...state,
         error: action.payload,
         isLoading: false,
+        streamingMessage: null,
       };
 
     case "LOAD_CHAT_HISTORY":
@@ -92,6 +114,7 @@ const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
         ...state,
         messages: [],
         error: null,
+        streamingMessage: null,
         isLoading: false,
       };
 
@@ -105,6 +128,7 @@ const initialState: ChatState = {
   messages: [],
   isLoading: false,
   error: null,
+  streamingMessage: null,
 };
 
 // Chat Provider Props
@@ -153,81 +177,55 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     };
   }, [socket, chatHistoryLoaded]);
 
-  // Handle AI responses
+  // Handle streaming AI responses
   useEffect(() => {
     if (!socket) return;
 
-    // Handle AI response
-    const handleAssistantMessage = (data: any) => {
-      console.log("🎉 ===== AI RESPONSE RECEIVED =====");
-      console.log("📦 Response data:", data);
-      console.log("📝 Content length:", data.content?.length || 0);
-      console.log("🤖 Assistant:", data.assistant || "unknown");
-      console.log("⏰ Timestamp:", data.timestamp);
-      console.log("✅ Logged:", data.logged);
-      console.log("📊 Metadata:", data.metadata);
+    // Handle streaming chunks
+    const handleStreamingChunk = (data: any) => {
+      console.log(
+        "📨 Received streaming chunk:",
+        data.content?.slice(0, 30) + "..."
+      );
+      dispatch({
+        type: "UPDATE_STREAMING",
+        payload: data.fullResponse,
+      });
+    };
 
-      if (data.content) {
-        console.log("📄 Content preview:", data.content.slice(0, 100) + "...");
-        dispatch({
-          type: "ADD_ASSISTANT_MESSAGE",
-          payload: data.content,
-        });
-        console.log("✅ AI message added to UI state");
-      } else {
-        console.error("❌ No content in AI response");
-        dispatch({
-          type: "SET_ERROR",
-          payload: "AI response không có nội dung",
-        });
-      }
-      console.log("🎉 ===== AI RESPONSE HANDLED =====");
+    // Handle completed AI response
+    const handleStreamingComplete = (data: any) => {
+      console.log("🎉 AI response completed:", data.content?.length + " chars");
+      dispatch({
+        type: "COMPLETE_STREAMING",
+        payload: data.content,
+      });
     };
 
     // Handle errors
     const handleServerError = (data: any) => {
-      console.error("🔴 ===== SERVER ERROR =====");
-      console.error("📦 Error data:", data);
-      console.error("💬 Message:", data.message);
-      console.error("🔢 Code:", data.code);
-      console.error("📋 Details:", data.details);
-
+      console.error("🔴 Server error:", data);
       dispatch({
         type: "SET_ERROR",
         payload: data.message || "Server error occurred",
       });
-      console.error("🔴 ===== ERROR HANDLED =====");
-    };
-
-    // Handle message confirmation
-    const handleMessageConfirmed = (data: any) => {
-      console.log("✅ ===== MESSAGE CONFIRMED =====");
-      console.log("📦 Confirmation data:", data);
-      console.log("🆔 Message ID:", data.messageId);
-      console.log("✅ Server received message successfully");
     };
 
     // Handle message logging confirmations
     const handleMessageLogged = (data: any) => {
-      console.log("✅ ===== MESSAGE LOGGED =====");
-      console.log("📦 Log data:", data);
-      console.log("📝 Type:", data.type);
-      console.log("📄 Content:", data.content?.slice(0, 50) + "...");
-      console.log("⏰ Timestamp:", data.timestamp);
-      console.log("✅ Logged status:", data.logged);
-      console.log("✅ ===== LOGGING CONFIRMED =====");
+      console.log("✅ Message logged to server:", data.type);
     };
 
-    socket.on("assistant_message", handleAssistantMessage);
+    socket.on("assistant_message_chunk", handleStreamingChunk);
+    socket.on("assistant_message_complete", handleStreamingComplete);
     socket.on("error", handleServerError);
     socket.on("message_logged", handleMessageLogged);
-    socket.on("message_confirmed", handleMessageConfirmed);
 
     return () => {
-      socket.off("assistant_message", handleAssistantMessage);
+      socket.off("assistant_message_chunk", handleStreamingChunk);
+      socket.off("assistant_message_complete", handleStreamingComplete);
       socket.off("error", handleServerError);
       socket.off("message_logged", handleMessageLogged);
-      socket.off("message_confirmed", handleMessageConfirmed);
     };
   }, [socket]);
 
@@ -238,85 +236,48 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       return;
     }
 
-    console.log("💬 ===== SENDING MESSAGE =====");
-    console.log("📝 Message content:", content.slice(0, 50) + "...");
-    console.log("📏 Message length:", content.length);
+    console.log("💬 Sending message:", content.slice(0, 50) + "...");
 
     // Add user message to UI immediately
     dispatch({ type: "ADD_USER_MESSAGE", payload: content });
-    console.log("✅ User message added to UI state");
-
-    // Set loading state
-    dispatch({ type: "SET_LOADING", payload: true });
-    console.log("⏳ Loading state set to true");
 
     // Clear any previous errors
     dispatch({ type: "SET_ERROR", payload: null });
-    console.log("🧹 Previous errors cleared");
 
     // Debug connection status
-    console.log("🔍 ===== CONNECTION DEBUG =====");
-    console.log("🔗 isConnected:", isConnected);
-    console.log("📡 hasSocket:", !!socket);
-    console.log("🤝 serverHandshakeComplete:", serverHandshakeComplete);
-    console.log("📚 chatHistoryLoaded:", chatHistoryLoaded);
-    console.log("🆔 socket.id:", socket?.id || "no socket");
+    console.log("🔍 Connection debug:", {
+      isConnected,
+      hasSocket: !!socket,
+      serverHandshakeComplete,
+    });
 
     // Send message to backend (server handles everything)
     if (isConnected && socket && serverHandshakeComplete) {
-      console.log("📤 ===== SENDING TO SERVER =====");
-      console.log("🎯 Emitting 'user_message' event");
-
-      const messageData = {
+      console.log("📤 Sending message to server for processing");
+      socket.emit("user_message", {
         content,
         timestamp: new Date().toISOString(),
-      };
+      });
 
-      console.log("📦 Message data:", messageData);
-
-      console.log("🎯 Emitting to socket ID:", socket.id);
-      console.log("🔍 Socket connected:", socket.connected);
-      console.log("🔍 Socket transport:", socket.io?.engine?.transport?.name);
-
-      // Add message ID for tracking
-      const messageId = Date.now();
-      const messageWithId = { ...messageData, messageId };
-
-      socket.emit("user_message", messageWithId);
-      console.log("✅ Message emitted to server successfully");
-      console.log("🆔 Message ID:", messageId);
-
-      // Debug: Check if socket is still connected after emit
-      console.log("🔍 Socket connected after emit:", socket.connected);
-      console.log("🔍 Socket ID after emit:", socket.id);
-
-      // Set up timeout to detect if no response
-      setTimeout(() => {
-        if (state.isLoading) {
-          console.warn("⚠️ No AI response received after 30 seconds");
-          dispatch({
-            type: "SET_ERROR",
-            payload: "Không nhận được phản hồi từ AI sau 30 giây",
-          });
-        }
-      }, 30000);
+      // Start streaming message placeholder
+      const streamingMessage = createAssistantMessage("", "wendy");
+      dispatch({
+        type: "START_STREAMING",
+        payload: streamingMessage,
+      });
     } else if (isConnected && socket && !serverHandshakeComplete) {
-      console.log("⏳ ===== WAITING FOR HANDSHAKE =====");
-      console.log("🤝 Server handshake not complete yet");
+      console.log("⏳ Waiting for server handshake before sending message");
       dispatch({
         type: "SET_ERROR",
         payload: "Đang kết nối với server...",
       });
     } else {
-      console.log("❌ ===== NO CONNECTION =====");
-      console.log("🔌 No connection to backend server");
+      console.log("❌ No connection to backend server");
       dispatch({
         type: "SET_ERROR",
         payload: "Không có kết nối đến server",
       });
     }
-
-    console.log("💬 ===== MESSAGE SEND COMPLETE =====");
   };
 
   // Clear messages function

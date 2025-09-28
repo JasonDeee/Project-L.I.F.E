@@ -6,8 +6,8 @@ import TypingIndicator from "./TypingIndicator";
 import "./ChatContainer.css";
 
 const ChatContainer: React.FC = () => {
-  const { messages, isTyping, typingAssistant, streamingMessage, error } =
-    useChat();
+  const { state } = useChat();
+  const { messages, isLoading, error } = state;
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new messages arrive
@@ -20,7 +20,7 @@ const ChatContainer: React.FC = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, streamingMessage, isTyping]);
+  }, [messages, isLoading]);
 
   // Handle scroll behavior
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -42,22 +42,10 @@ const ChatContainer: React.FC = () => {
     ));
   };
 
-  const renderStreamingMessage = () => {
-    if (!streamingMessage) return null;
-
-    return (
-      <ChatMessage
-        key={`streaming-${streamingMessage.id}`}
-        message={streamingMessage}
-        isStreaming={true}
-      />
-    );
-  };
-
   const renderTypingIndicator = () => {
-    if (!isTyping || !typingAssistant || streamingMessage) return null;
+    if (!isLoading) return null;
 
-    return <TypingIndicator assistant={typingAssistant} />;
+    return <TypingIndicator assistant="wendy" />;
   };
 
   const renderError = () => {
@@ -81,7 +69,6 @@ const ChatContainer: React.FC = () => {
       <div className="chat-messages" onScroll={handleScroll}>
         <div className="messages-content">
           {renderMessages()}
-          {renderStreamingMessage()}
           {renderTypingIndicator()}
           {renderError()}
 
@@ -97,4 +84,3 @@ const ChatContainer: React.FC = () => {
 };
 
 export default ChatContainer;
-
