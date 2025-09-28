@@ -169,44 +169,90 @@ io.on("connection", (socket) => {
         `🧠 Getting AI response with ${recentHistory.length} context messages...`
       );
 
-      // 4. Get AI response from LM Studio (non-streaming)
-      const aiResponse = await lmStudioService.sendChatCompletion(
-        data.content,
-        recentHistory,
-        {
-          temperature: 0.7,
-          maxTokens: 2048,
-        }
-      );
+      // 4. Start streaming AI response from LM Studio
+      const startTime = Date.now();
+      let fullResponse = "";
+      let chunkCount = 0;
 
-      if (aiResponse.success) {
-        // 5. Log AI response
-        const aiLogSuccess = await chatLogger.logAssistantMessage(
-          aiResponse.fullResponse,
+      // Send stream start event
+      socket.emit("assistant_stream_start", {
+        messageId: data.messageId,
+        timestamp: new Date().toISOString(),
+      });
+
+      try {
+        // Stream AI response chunk by chunk
+        const stream = lmStudioService.streamChatCompletion(
+          data.content,
+          recentHistory,
           {
-            session_id: socket.id,
-            assistant: "wendy",
-            model: aiResponse.metadata?.model || "unknown",
-            response_time_ms: aiResponse.metadata?.response_time_ms,
-            streaming: aiResponse.metadata?.streaming,
+            temperature: 0.7,
+            maxTokens: 2048,
           }
         );
 
-        // 6. Send AI response to client
-        socket.emit("assistant_message", {
+        for await (const chunk of stream) {
+          fullResponse += chunk;
+          chunkCount++;
+
+          // Send each chunk to client
+          socket.emit("assistant_chunk", {
+            messageId: data.messageId,
+            content: chunk,
+            chunkIndex: chunkCount,
+            isComplete: false,
+            timestamp: new Date().toISOString(),
+          });
+
+          console.log(`📦 Sent chunk ${chunkCount}: "${chunk}"`);
+        }
+
+        const totalTime = Date.now() - startTime;
+
+        // 5. Log complete AI response
+        const aiLogSuccess = await chatLogger.logAssistantMessage(
+          fullResponse,
+          {
+            session_id: socket.id,
+            assistant: "wendy",
+            model: "default",
+            response_time_ms: totalTime,
+            streaming: true,
+            chunk_count: chunkCount,
+          }
+        );
+
+        // 6. Send stream complete event
+        socket.emit("assistant_stream_complete", {
+          messageId: data.messageId,
           type: "assistant",
-          content: aiResponse.fullResponse,
+          content: fullResponse,
           assistant: "wendy",
           timestamp: new Date().toISOString(),
           logged: aiLogSuccess,
-          metadata: aiResponse.metadata,
+          metadata: {
+            model: "default",
+            response_time_ms: totalTime,
+            streaming: true,
+            character_count: fullResponse.length,
+            chunk_count: chunkCount,
+          },
         });
 
         console.log(
-          `🤖 AI response completed and logged: ${aiResponse.fullResponse.length} chars`
+          `🤖 AI streaming completed: ${fullResponse.length} chars in ${chunkCount} chunks (${totalTime}ms)`
         );
-      } else {
-        throw new Error(`AI response failed: ${aiResponse.error}`);
+      } catch (streamError) {
+        console.error("❌ Streaming error:", streamError);
+
+        // Send stream error event
+        socket.emit("assistant_stream_error", {
+          messageId: data.messageId,
+          error: streamError.message,
+          timestamp: new Date().toISOString(),
+        });
+
+        throw streamError;
       }
     } catch (error) {
       console.error("❌ Error handling user message:", error);

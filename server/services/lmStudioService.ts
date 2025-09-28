@@ -111,7 +111,7 @@ class LMStudioService {
   }
 
   /**
-   * Send chat completion request (non-streaming for now)
+   * Send chat completion request (non-streaming)
    */
   async sendChatCompletion(
     message: string,
@@ -187,6 +187,72 @@ class LMStudioService {
         success: false,
         error: error.message,
       };
+    }
+  }
+
+  /**
+   * Stream chat completion request (streaming)
+   */
+  async *streamChatCompletion(
+    message: string,
+    chatHistory: ChatMessage[] = [],
+    options: { temperature?: number; maxTokens?: number } = {}
+  ): AsyncGenerator<string, void, unknown> {
+    try {
+      const { temperature = 0.7, maxTokens = 2048 } = options;
+
+      if (!this.isInitialized) {
+        const initResult = await this.initialize();
+        if (!initResult.success) {
+          throw new Error(`Initialization failed: ${initResult.error}`);
+        }
+      }
+
+      // Prepare messages array for SDK
+      const messages = [
+        {
+          role: "system",
+          content:
+            "You are WENDY, a helpful AI assistant. Respond in Vietnamese when the user speaks Vietnamese.",
+        },
+        ...chatHistory.map((msg) => ({
+          role: msg.type === "user" ? "user" : "assistant",
+          content: msg.content,
+        })),
+        {
+          role: "user",
+          content: message,
+        },
+      ];
+
+      console.log(`📤 Starting streaming chat completion:`, {
+        model: this.model.id || "default",
+        messageCount: messages.length,
+        temperature,
+        maxTokens,
+      });
+
+      const startTime = Date.now();
+
+      // Use SDK's respond method for streaming
+      const prediction = this.model.respond(messages, {
+        temperature,
+        maxTokens,
+      });
+
+      // Stream each fragment
+      for await (const fragment of prediction) {
+        if (fragment.content) {
+          console.log(`📦 Streaming chunk: "${fragment.content}"`);
+          yield fragment.content;
+        }
+      }
+
+      const totalTime = Date.now() - startTime;
+      console.log(`🎉 Streaming completed in ${totalTime}ms`);
+    } catch (error: any) {
+      console.error("❌ Streaming chat completion failed:", error.message);
+      throw error;
     }
   }
 

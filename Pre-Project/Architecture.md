@@ -4,10 +4,10 @@
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    CLIENT (React)                       │
+│                  CLIENT (HTML/JS)                       │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
-│  │ Chat UI     │  │ WebSocket   │  │ State Mgmt  │     │
-│  │ Components  │  │ Client      │  │ (Context)   │     │
+│  │ Chat UI     │  │ Socket.IO   │  │ Chat Logic  │     │
+│  │ (HTML/CSS)  │  │ Client      │  │ (Vanilla JS)│     │
 │  └─────────────┘  └─────────────┘  └─────────────┘     │
 └─────────────────────────────────────────────────────────┘
                               │
@@ -148,13 +148,13 @@ User Question → WENDY → "I need Jason's help" → JASON Service → Combined
 
 ## 🛠️ Technology Stack Details
 
-### Frontend (React)
+### Frontend (HTML/JS)
 
 ```
-- React 18+ (Hooks, Context)
+- Vanilla HTML/CSS/JavaScript
 - Socket.io-client (WebSocket)
-- CSS Modules/Styled Components
-- Real-time state management
+- Modern CSS (Flexbox, Grid)
+- Simple state management (class-based)
 ```
 
 ### Backend (Node.js)
@@ -196,7 +196,7 @@ User Question → WENDY → "I need Jason's help" → JASON Service → Combined
 ### Phase 1: Development
 
 ```
-- Local React dev server (port 3000)
+- Local HTML client (file:// or simple server)
 - Local Node.js server (port 8000)
 - Local LM Studio instances
 ```
