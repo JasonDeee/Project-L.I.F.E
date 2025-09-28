@@ -44,7 +44,7 @@ class LMStudioService {
       console.log("🚀 Initializing LM Studio client...");
 
       // Get the first available model
-      this.model = await this.client.llm.model();
+      this.model = await this.client.llm.model("qwen/qwen3-4b-2507");
 
       if (!this.model) {
         throw new Error("No models available in LM Studio");
@@ -119,7 +119,7 @@ class LMStudioService {
     options: { temperature?: number; maxTokens?: number } = {}
   ): Promise<LMStudioResponse> {
     try {
-      const { temperature = 0.7, maxTokens = 2048 } = options;
+      const { temperature = 0.7, maxTokens = 10240 } = options;
 
       if (!this.isInitialized) {
         const initResult = await this.initialize();
@@ -199,7 +199,7 @@ class LMStudioService {
     options: { temperature?: number; maxTokens?: number } = {}
   ): AsyncGenerator<string, void, unknown> {
     try {
-      const { temperature = 0.7, maxTokens = 2048 } = options;
+      const { temperature = 0.7, maxTokens = 10240 } = options;
 
       if (!this.isInitialized) {
         const initResult = await this.initialize();
