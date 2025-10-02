@@ -19,11 +19,11 @@ Thứ tự chuỗi request tới model (phần message của payload)
 
 **Phân loại tác vụ /Task archetype**
 
-- User-Based: Tác vụ do người dùng hành động (ACTIONS). model chỉ đóng vai trò trò chuyện (COMUNITATE), tư vấn và trao đổi thông tin. Promt chain sẽ chỉ có một cấp độ (Hoặc coi như không có promt chain): Model trả lời > xong 1 chain > người dùng hỏi > xong 1 chain >...> Xong task
+- User-Based: Tác vụ do người dùng hành động (_ACTIONS_). model chỉ đóng vai trò trò chuyện (_COMMUNE_), tư vấn và trao đổi thông tin. Promt chain sẽ chỉ có một cấp độ (Hoặc coi như không có promt chain): Model trả lời > xong 1 chain > người dùng hỏi > xong 1 chain >...> Xong task
 
-- Full-Model: Tác vụ hoàn toàn do model xử lý, Promt Chain vô hạn. Model sẽ tự gọi lại chính nó để xử lý task cho đến khi hoàn thành. Model có thể thực hiện cả ACTION lẫn COMUNITATE trong quá trình triển khai promt chain để hoàn thành task.
+- Full-Model: Tác vụ hoàn toàn do model xử lý, Promt Chain vô hạn. Model sẽ tự gọi lại chính nó để xử lý task cho đến khi hoàn thành. Model có thể thực hiện cả ACTION lẫn _COMMUNE_ trong quá trình triển khai promt chain để hoàn thành task.
 
-- Hybrid
+- Hybrid (Hoặc User in the Loop): Kết hợp của 2 loại trên, và có thêm tính năng _CHECKLIST_ (Mô tả kỹ bên dưới). Sử dụng trong trường hợp 1 tác vụ chia ra làm các tác vụ nhỏ hơn (**CHECKLIST**). Trong quá trình xử lý 1 task, sẽ có những _CHECKLIST_ model có thể tự xử lý. Tương tự sẽ có những _CHECKLIST_ chỉ có thể do người dùng xử lý hoặc cần sự đồng ý của người dùng.
 
 **Các cấp độ của tác vụ /Task Leveling**
 
