@@ -36,25 +36,26 @@
 
 ### Backend Setup (Node.js + Socket.io)
 
-- [ ] **Node.js project initialization**
+- [x] **Node.js project initialization**
 
-  - [ ] package.json setup with dependencies
-  - [ ] Express server configuration
-  - [ ] Socket.io integration
-  - [ ] Basic folder structure creation
+  - [x] package.json setup with dependencies
+  - [x] Express server configuration
+  - [x] Socket.io integration
+  - [x] Basic folder structure creation
 
-- [ ] **Simple File Storage System**
+- [x] **Simple File Storage System**
 
-  - [ ] Create E:/server directory structure (per Path.json)
-  - [ ] Basic Daily_chat.json schema (simplified)
-  - [ ] File operations utilities (read/write/append)
-  - [ ] Date-based file organization (YYYY/MM-month/DD.MM.YYYY/)
+  - [x] Create E:/server directory structure (per Path.json)
+  - [x] Basic Daily_chat.json schema (simplified)
+  - [x] File operations utilities (read/write/append)
+  - [x] Date-based file organization (YYYY/MM-month/DD.MM.YYYY/)
 
-- [ ] **Chat Message Logging**
-  - [ ] Receive messages from React frontend
-  - [ ] Format to simple JSON structure
-  - [ ] Save to Daily_chat.json files
-  - [ ] Handle file creation and appending
+- [x] **Chat Message Logging**
+  - [x] Receive messages from HTML/JS client (Socket.io)
+  - [x] Format to simple JSON structure
+  - [x] Save to Daily_chat.json files
+  - [x] Handle file creation and appending
+  - [x] Stream assistant responses (LM Studio → Server → Client)
 
 ### **OUT OF SCOPE (Current Sprint)**
 
@@ -74,7 +75,7 @@
 
 - [x] **Message Flow Update**
   - [x] Send user messages to backend via Socket.io
-  - [x] Send assistant responses to backend for logging
+  - [x] Server-side LLM integration & streaming to client
   - [x] Maintain current direct API functionality as fallback
 
 ## 📋 NEXT PHASE (Phase 2: Core Features)

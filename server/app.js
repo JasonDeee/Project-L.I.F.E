@@ -17,7 +17,13 @@ const server = http.createServer(app);
 
 // Configure CORS
 const corsOptions = {
-  origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
+  origin: [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5500", // Live Server
+    "https://chat.vanced.site",
+    "https://server.vanced.site", // Server tunnel domain
+  ],
   methods: ["GET", "POST"],
   credentials: true,
 };
@@ -385,7 +391,7 @@ async function startServer() {
     await ensureDirectories();
 
     // Start server
-    const PORT = process.env.PORT || 8000;
+    const PORT = process.env.PORT || 9000;
     server.listen(PORT, async () => {
       console.log("🚀 Project L.I.F.E Backend Server Started");
       console.log(`📍 Server running on port ${PORT}`);

@@ -1,6 +1,7 @@
 class ChatApp {
   constructor() {
-    this.serverUrl = "http://192.168.1.3:8000";
+    // Auto-detect protocol and use Cloudflare tunnel domain
+    this.serverUrl = this.getServerUrl();
     this.conversationHistory = [];
     this.isConnected = false;
     this.isTyping = false;
@@ -14,6 +15,21 @@ class ChatApp {
     this.initializeElements();
     this.bindEvents();
     this.checkConnection();
+    // const socket = io();
+  }
+
+  getServerUrl() {
+    // Check if running on HTTPS (production) or HTTP (local dev)
+    const isHTTPS = window.location.protocol === "https:";
+    const isProduction = window.location.hostname === "chat.vanced.site";
+
+    if (isProduction) {
+      // Production: Use Cloudflare tunnel domain with HTTPS
+      return "https://api.vanced.site"; // Use HTTPS, Socket.io will auto-upgrade to WSS
+    } else {
+      // Local development: Use localhost
+      return "http://localhost:9000";
+    }
   }
 
   initializeElements() {
@@ -186,10 +202,15 @@ class ChatApp {
           return resolve();
         }
 
+        console.log(`🔌 Attempting to connect to: ${this.serverUrl}`);
+        this.debugLogLine(`Connecting to: ${this.serverUrl}`);
+
         this.socket = io(this.serverUrl, {
           transports: ["websocket"],
           timeout: 5000,
           forceNew: true,
+          upgrade: true,
+          secure: true, // Force secure connection for HTTPS
         });
 
         this.setupSocketEvents(resolve, reject);
