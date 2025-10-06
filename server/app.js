@@ -4,7 +4,9 @@ const socketIo = require("socket.io");
 const cors = require("cors");
 const { ensureDirectories } = require("./config/paths");
 const ChatLogger = require("./utils/chatLogger");
-const lmStudioService = require("./services/lmStudioService");
+const lmStudioService = require("./services/lmStudioService.ts");
+const compressionService = require("./services/compressionService");
+const summaryManager = require("./utils/summaryManager");
 
 /**
  * Project L.I.F.E - Simple Backend Server
@@ -167,13 +169,36 @@ io.on("connection", (socket) => {
 
       console.log("✅ User message logged successfully");
 
-      // 3. Get chat history for context
+      // 3. Get chat history for context (ContextBuilder will handle this)
       const chatHistory = await chatLogger.getTodaysChatHistory();
-      const recentHistory = chatHistory.slice(-10); // Last 10 messages for context
 
       console.log(
-        `🧠 Getting AI response with ${recentHistory.length} context messages...`
+        `🧠 Getting AI response with ${chatHistory.length} total messages (ContextBuilder will optimize)...`
       );
+
+      // 🔍 ANALYZE TOKEN USAGE BEFORE SENDING TO LLM (using full history for analysis)
+      try {
+        const contextAnalysis = await lmStudioService.doesChatFitInContext([
+          ...chatHistory,
+          { type: "user", content: data.content },
+        ]);
+
+        if (contextAnalysis.success) {
+          console.log(`🎯 FULL CONTEXT TOKEN ANALYSIS:`, contextAnalysis.data);
+
+          // Check if we need compression
+          if (contextAnalysis.data.usagePercentage > 60) {
+            console.log(
+              `⚠️ Context usage high (${contextAnalysis.data.usagePercentage}%) - compression may be needed soon`
+            );
+          }
+        }
+      } catch (analysisError) {
+        console.log(
+          `⚠️ Could not analyze context tokens:`,
+          analysisError.message
+        );
+      }
 
       // 4. Start streaming AI response from LM Studio
       const startTime = Date.now();
@@ -187,10 +212,10 @@ io.on("connection", (socket) => {
       });
 
       try {
-        // Stream AI response chunk by chunk
+        // Stream AI response chunk by chunk (ContextBuilder handles full context chain)
         const stream = lmStudioService.streamChatCompletion(
           data.content,
-          recentHistory,
+          chatHistory, // Pass full history, ContextBuilder will optimize
           {
             temperature: 0.7,
             maxTokens: 2048,
@@ -230,6 +255,7 @@ io.on("connection", (socket) => {
 
         // 6. Send stream complete event
         socket.emit("assistant_stream_complete", {
+          // raw: data,
           messageId: data.messageId,
           type: "assistant",
           content: fullResponse,
@@ -248,6 +274,10 @@ io.on("connection", (socket) => {
         console.log(
           `🤖 AI streaming completed: ${fullResponse.length} chars in ${chunkCount} chunks (${totalTime}ms)`
         );
+
+        // 🔄 SCHEDULE COMPRESSION CHECK (Background)
+        console.log(`🔍 Scheduling compression check...`);
+        chatLogger.scheduleCompressionCheck();
       } catch (streamError) {
         console.error("❌ Streaming error:", streamError);
 
@@ -360,6 +390,16 @@ io.on("connection", (socket) => {
     socket.emit("connection_status", {
       status: "connected",
       message: "Backend server đang hoạt động bình thường",
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  // Handle compression status request
+  socket.on("compression_status", () => {
+    console.log(`📊 Compression status request from ${socket.id}`);
+    const status = chatLogger.getCompressionStatus();
+    socket.emit("compression_status_response", {
+      ...status,
       timestamp: new Date().toISOString(),
     });
   });

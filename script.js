@@ -307,7 +307,7 @@ class ChatApp {
 
     this.socket.on("assistant_stream_complete", (data) => {
       if (!data || !this.currentStreamingMessage) return;
-
+      // console.log("LM Data:", data.raw);
       this.debugLogLine(
         `✅ Stream completed: ${data.metadata?.character_count} chars in ${data.metadata?.chunk_count} chunks`,
         "ok"
@@ -331,6 +331,18 @@ class ChatApp {
       if (!data) return;
       const content = data.content ?? "";
       this.addMessage(content, "assistant");
+    });
+
+    // Compression status updates
+    this.socket.on("compression_status_response", (data) => {
+      this.debugLogLine(
+        `🔄 Compression Status: ${data.isCompressing ? "Active" : "Idle"}`
+      );
+      if (data.stats) {
+        this.debugLogLine(
+          `📊 Total compressions: ${data.stats.totalCompressions}`
+        );
+      }
     });
   }
 

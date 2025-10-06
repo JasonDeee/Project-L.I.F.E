@@ -1,6 +1,8 @@
 const fs = require("fs-extra");
 const path = require("path");
 const { PATHS } = require("../config/paths");
+const compressionService = require("../services/compressionService");
+const summaryManager = require("./summaryManager");
 
 /**
  * Simple Chat Logger for Daily_chat.json files
@@ -12,6 +14,7 @@ class ChatLogger {
     this.currentDate = new Date();
     this.messageQueue = [];
     this.isProcessing = false;
+    this.compressionCheckTimeout = null;
   }
 
   /**
@@ -146,6 +149,93 @@ class ChatLogger {
       console.error("❌ Error getting chat history:", error);
       return [];
     }
+  }
+
+  /**
+   * Schedule compression check (background)
+   */
+  scheduleCompressionCheck() {
+    // Clear existing timeout
+    if (this.compressionCheckTimeout) {
+      clearTimeout(this.compressionCheckTimeout);
+    }
+
+    // Schedule compression check after delay
+    this.compressionCheckTimeout = setTimeout(async () => {
+      await this.checkAndCompress();
+    }, 2000); // 2 second delay as per config
+  }
+
+  /**
+   * Check if compression is needed and perform it
+   */
+  async checkAndCompress() {
+    try {
+      console.log(`🔍 Checking if compression is needed...`);
+
+      // Get current chat history
+      const messages = await this.getTodaysChatHistory();
+
+      if (messages.length < 10) {
+        console.log(
+          `ℹ️ Not enough messages for compression (${messages.length})`
+        );
+        return false;
+      }
+
+      // Check if compression is needed
+      const compressionCheck = await compressionService.shouldCompress(
+        messages
+      );
+
+      if (!compressionCheck.shouldCompress) {
+        console.log(`✅ No compression needed: ${compressionCheck.reason}`);
+        return false;
+      }
+
+      console.log(`🔄 Compression needed: ${compressionCheck.reason}`);
+      console.log(
+        `📊 Current tokens: ${compressionCheck.currentTokens}, Target: ${compressionCheck.targetTokens}`
+      );
+
+      // Perform compression
+      const compressionResult = await compressionService.compressHistory(
+        messages
+      );
+
+      if (!compressionResult.success) {
+        console.error(`❌ Compression failed: ${compressionResult.reason}`);
+        return false;
+      }
+
+      // Save compression summary to Daily_summary.json
+      const summaryAdded = await summaryManager.addCompressionSummary(
+        compressionResult.compressionResult
+      );
+
+      if (summaryAdded) {
+        console.log(`✅ Compression completed and summary saved`);
+        console.log(`📊 Compression stats:`, compressionResult.stats);
+        return true;
+      } else {
+        console.error(`❌ Failed to save compression summary`);
+        return false;
+      }
+    } catch (error) {
+      console.error(`❌ Error during compression check:`, error.message);
+      return false;
+    }
+  }
+
+  /**
+   * Get compression status
+   */
+  getCompressionStatus() {
+    return {
+      isCompressing: compressionService.isCompressionInProgress(),
+      stats: compressionService.getCompressionStats(),
+      hasScheduledCheck: this.compressionCheckTimeout !== null,
+    };
   }
 
   /**
